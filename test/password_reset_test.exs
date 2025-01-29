@@ -27,7 +27,7 @@ defmodule AshAuthentication.Phoenix.PasswordResetTest do
   test "reset_route routes liveview renders the password reset page", %{conn: conn} do
     conn = get(conn, "/password-reset/my_token_213")
     assert {:ok, _view, html} = live(conn)
-    assert html =~ "Password reset"
+    assert html =~ "Reset password"
   end
 
   test "reset_route routes liveview honours external gettext_fn", %{conn: conn} do

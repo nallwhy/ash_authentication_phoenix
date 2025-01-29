@@ -30,7 +30,7 @@ defmodule AshAuthentication.Phoenix.Overrides.Default do
     set :label_class, "mt-2 mb-4 text-2xl tracking-tight font-bold text-gray-900 dark:text-white"
     set :form_class, nil
     set :spacer_class, "py-1"
-    set :button_text, "Change password"
+    set :button_text, "Reset password"
     set :disable_button_text, "Changing password ..."
   end
 
