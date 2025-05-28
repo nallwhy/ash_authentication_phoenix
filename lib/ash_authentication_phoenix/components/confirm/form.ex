@@ -7,6 +7,7 @@ defmodule AshAuthentication.Phoenix.Components.Confirm.Form do
     root_class: "CSS class for the root `div` element.",
     label_class: "CSS class for the `h2` element.",
     form_class: "CSS class for the `form` element.",
+    button_text: "Text for the submit button.",
     disable_button_text: "Text for the submit button when the request is happening."
 
   @moduledoc """
@@ -129,6 +130,7 @@ defmodule AshAuthentication.Phoenix.Components.Confirm.Form do
           strategy={@strategy}
           form={form}
           action={:confirm}
+          submit_label={_gettext(override_for(@overrides, :button_text))}
           disable_text={_gettext(override_for(@overrides, :disable_button_text))}
           overrides={@overrides}
           gettext_fn={@gettext_fn}
