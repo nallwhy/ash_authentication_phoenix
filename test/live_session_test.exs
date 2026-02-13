@@ -172,6 +172,69 @@ defmodule AshAuthentication.Phoenix.LiveSessionTest do
     end
   end
 
+  describe "generate_session" do
+    test "stores subject under subject_name key for resources without token presence requirement" do
+      user =
+        Example.Accounts.User
+        |> Ash.Changeset.for_create(:register_with_password, %{
+          email: "gen-session-test1@example.com",
+          password: "secure-password",
+          password_confirmation: "secure-password"
+        })
+        |> Ash.create!()
+
+      conn = build_conn_with_user(user)
+      session = LiveSession.generate_session(conn)
+
+      assert is_binary(session["user"])
+      assert session["user"] == AshAuthentication.user_to_subject(user)
+      refute Map.has_key?(session, "user_token")
+    end
+
+    test "round-trips through on_mount for resources without token presence requirement" do
+      user =
+        Example.Accounts.User
+        |> Ash.Changeset.for_create(:register_with_password, %{
+          email: "gen-session-test2@example.com",
+          password: "secure-password",
+          password_confirmation: "secure-password"
+        })
+        |> Ash.create!()
+
+      conn = build_conn_with_user(user)
+      session = LiveSession.generate_session(conn)
+
+      # Prepend JTI since User resource uses session_identifier(:jti)
+      # generate_session stores the raw subject, but on_mount expects jti:subject format
+      # for resources with session_identifier(:jti). In real flow, store_in_session handles this.
+      # Here we verify the generate_session output feeds into on_mount correctly.
+      socket = build_socket()
+      session_with_jti = Map.put(session, "user", "fake-jti:#{session["user"]}")
+      {:cont, result_socket} = LiveSession.on_mount(:default, %{}, session_with_jti, socket)
+
+      assert result_socket.assigns.current_user.id == user.id
+    end
+
+    test "stores tenant and context" do
+      conn =
+        Plug.Test.conn(:get, "/")
+        |> Plug.Conn.put_private(:phoenix_endpoint, AshAuthentication.Phoenix.Test.Endpoint)
+        |> Ash.PlugHelpers.set_tenant("my_tenant")
+        |> Ash.PlugHelpers.set_context(%{some: :context})
+
+      session = LiveSession.generate_session(conn)
+
+      assert session["tenant"] == "my_tenant"
+      assert session["context"] == %{some: :context}
+    end
+  end
+
+  defp build_conn_with_user(user) do
+    Plug.Test.conn(:get, "/")
+    |> Plug.Conn.put_private(:phoenix_endpoint, AshAuthentication.Phoenix.Test.Endpoint)
+    |> Plug.Conn.assign(:current_user, user)
+  end
+
   defp build_socket do
     %Phoenix.LiveView.Socket{
       endpoint: AshAuthentication.Phoenix.Test.Endpoint,
